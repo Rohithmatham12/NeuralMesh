@@ -1,6 +1,6 @@
 # NeuralMesh
 
-NeuralMesh is a compact C++17/Python systems-programming project for Linux-style distributed inference infrastructure. It includes a multithreaded C++ server core, custom thread pool, lock-free work queue, RAII-managed zero-copy buffers, Kafka-style event logging, and a Python validation/benchmarking framework.
+NeuralMesh is a compact C++17/Python systems-programming project for Linux-style distributed inference infrastructure. It includes a multithreaded C++ server core, custom thread pool, lock-free work queue, consistent-hash routing across simulated GPU nodes, failover tests, RAII-managed zero-copy buffers, Kafka-style event logging, and a Python validation/benchmarking framework.
 
 This repository is intentionally dependency-light so it can be cloned and built quickly. The checked-in transport is a framed RPC protocol; `docs/grpc-kafka-notes.md` documents how the same service contract maps to production gRPC and Kafka.
 
@@ -17,6 +17,10 @@ python3 python/benchmark.py --configs 24 --json
 
 - C++17 server architecture with `std::thread`, `std::atomic`, compare-and-swap, and RAII.
 - Lock-free multi-producer/multi-consumer queue for request dispatch.
+- Consistent-hashing router for distributing inference requests across GPU nodes.
+- Fault-injection failover behavior when a node becomes unhealthy.
+- GPU topology estimates for HBM/NVLink/PCIe data movement concepts.
+- Cache-line-aligned node stats to avoid false sharing on hot counters.
 - Zero-copy buffer views for parsing framed requests without extra serialization copies.
 - Deterministic inference stub useful for validation and performance tests.
 - Kafka-like append-only event log for structured request/latency records.
@@ -33,6 +37,8 @@ python3 python/benchmark.py --configs 24 --json
 The most defensible implementation files are:
 
 - `include/neuralmesh/lock_free_queue.hpp`: CAS loop and memory-ordering choices.
+- `include/neuralmesh/cluster.hpp`: consistent hashing, failover, and cache-line alignment.
+- `include/neuralmesh/gpu_topology.hpp`: GPU memory/interconnect transfer estimates.
 - `src/thread_pool.cpp`: worker lifecycle and shutdown.
 - `src/framed_rpc.cpp`: length-prefixed protocol and zero-copy request view.
 - `python/benchmark.py`: automated validation across system configurations.

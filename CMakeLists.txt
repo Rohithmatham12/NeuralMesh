@@ -7,8 +7,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_library(neuralmesh
   src/buffer.cpp
+  src/cluster.cpp
   src/event_log.cpp
   src/framed_rpc.cpp
+  src/gpu_topology.cpp
   src/model.cpp
   src/thread_pool.cpp
 )
@@ -26,7 +28,9 @@ target_link_libraries(neuralmesh_server PRIVATE neuralmesh)
 add_executable(neuralmesh_tests
   tests/test_main.cpp
   tests/test_buffer.cpp
+  tests/test_cluster.cpp
   tests/test_event_log.cpp
+  tests/test_gpu_topology.cpp
   tests/test_model.cpp
   tests/test_thread_pool.cpp
 )

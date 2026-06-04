@@ -6,6 +6,7 @@ import json
 import statistics
 import time
 from dataclasses import dataclass, asdict
+from contextlib import nullcontext
 
 
 @dataclass(frozen=True)
@@ -30,13 +31,22 @@ def synthetic_infer(features: list[float]) -> float:
 
 
 def run_config(config: Config) -> Result:
+    profiler = nullcontext()
+    try:
+        import torch
+
+        profiler = torch.profiler.profile(activities=[torch.profiler.ProfilerActivity.CPU])
+    except Exception:
+        profiler = nullcontext()
+
     latencies: list[float] = []
     start = time.perf_counter()
-    for request_id in range(config.batch_size):
-        features = [((request_id + idx) % 17 - 8) / 8.0 for idx in range(config.feature_count)]
-        before = time.perf_counter()
-        synthetic_infer(features)
-        latencies.append((time.perf_counter() - before) * 1_000_000)
+    with profiler:
+        for request_id in range(config.batch_size):
+            features = [((request_id + idx) % 17 - 8) / 8.0 for idx in range(config.feature_count)]
+            before = time.perf_counter()
+            synthetic_infer(features)
+            latencies.append((time.perf_counter() - before) * 1_000_000)
     elapsed = time.perf_counter() - start
     ordered = sorted(latencies)
     p95_index = min(len(ordered) - 1, int(len(ordered) * 0.95))
